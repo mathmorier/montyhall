@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation du Problème de Monty Hall</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+        #doors-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 40px 0;
+        }
+        .door {
+            width: 100px;
+            height: 160px;
+            border: 3px solid #7f8c8d;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #95a5a6;
+            color: white;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .door:hover {
+            border-color: #3498db;
+            transform: scale(1.05);
+        }
+        .door.selected {
+            border-color: #2980b9;
+            background-color: #3498db;
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.7);
+        }
+        .door.open {
+            background-color: #ecf0f1;
+        }
+        .door .content {
+            font-size: 60px;
+        }
+        #message {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #d35400;
+            height: 50px;
+            line-height: 50px;
+        }
+        #controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        #controls button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #controls button:hover {
+            background-color: #2980b9;
+        }
+        #controls button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        #controls #resetStatsButton {
+            background-color: #e74c3c;
+        }
+        #controls #resetStatsButton:hover {
+            background-color: #c0392b;
+        }
+        #testStickButton, #testSwitchButton {
+            background-color: #1abc9c;
+        }
+        #testStickButton:hover, #testSwitchButton:hover {
+            background-color: #16a085;
+        }
+        #stats {
+            margin-top: 30px;
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .stat-box {
+            min-width: 200px;
+            margin: 10px;
+            padding: 10px;
+            background: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .stat-box h3 {
+            margin: 0 0 10px 0;
+            color: #2980b9;
+        }
+        .stat-box p {
+            margin: 5px 0;
+            font-size: 1.1em;
+        }
+        .explanation {
+            text-align: left;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-left: 5px solid #3498db;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Simulation du Problème de Monty Hall</h1>
+        <p>Jouez manuellement ou lancez des simulations automatiques pour voir les probabilités en action.</p>
+        
+        <div id="message">Choisissez une porte.</div>
+
+        <div id="doors-container">
+            <div class="door" id="door0"><div class="content">1</div></div>
+            <div class="door" id="door1"><div class="content">2</div></div>
+            <div class="door" id="door2"><div class="content">3</div></div>
+        </div>
+
+        <div id="controls">
+            <button id="resetButton">Nouvelle partie</button>
+            <button id="testStickButton">Tester 100x (Garder)</button>
+            <button id="testSwitchButton">Tester 100x (Changer)</button>
+            <button id="resetStatsButton">Vider les stats</button>
+        </div>
+
+        <div id="stats">
+            <div class="stat-box">
+                <h3>Stratégie : Garder son choix</h3>
+                <p>Parties jouées : <span id="stick_total">0</span></p>
+                <p>Victoires : <span id="stick_wins">0</span></p>
+                <p>Taux de victoire : <span id="stick_rate">0%</span></p>
+            </div>
+            <div class="stat-box">
+                <h3>Stratégie : Changer de porte</h3>
+                <p>Parties jouées : <span id="switch_total">0</span></p>
+                <p>Victoires : <span id="switch_wins">0</span></p>
+                <p>Taux de victoire : <span id="switch_rate">0%</span></p>
+            </div>
+        </div>
+        
+        <div class="explanation">
+            <h2>Pourquoi faut-il toujours changer ?</h2>
+            <p>Ce problème est un paradoxe célèbre car la solution est contre-intuitive.</p>
+            <ul>
+                <li>Au début, vous avez <strong>1 chance sur 3</strong> de choisir la bonne porte (celle avec la voiture). Cela signifie que vous avez <strong>2 chances sur 3</strong> de choisir une mauvaise porte (une chèvre).</li>
+                <li>Le présentateur, qui sait où se trouve la voiture, ouvre TOUJOURS une porte avec une chèvre parmi les deux que vous n'avez pas choisies.</li>
+                <li><strong>Cas 1 : Votre choix initial était la voiture (probabilité 1/3).</strong> Si vous changez, vous perdez.</li>
+                <li><strong>Cas 2 : Votre choix initial était une chèvre (probabilité 2/3).</strong> Le présentateur vous montre l'autre chèvre. La dernière porte non ouverte cache donc obligatoirement la voiture. Si vous changez, vous gagnez !</li>
+            </ul>
+            <p>En changeant, vous gagnez donc dans tous les cas où votre choix initial était mauvais. Comme vous aviez 2 chances sur 3 de faire un mauvais choix au départ, vous avez <strong>2 chances sur 3 de gagner en changeant</strong>.</p>
+        </div>
+    </div>
+
+    <script>
+        // Éléments du DOM
+        const doors = document.querySelectorAll('.door');
+        const messageEl = document.getElementById('message');
+        const resetButton = document.getElementById('resetButton');
+        const resetStatsButton = document.getElementById('resetStatsButton');
+        const testStickButton = document.getElementById('testStickButton');
+        const testSwitchButton = document.getElementById('testSwitchButton');
+
+        // Variables d'état du jeu
+        let carDoor, playerChoice, hostOpenedDoor;
+        let gameState = 'initial_choice'; // 'initial_choice', 'final_choice', 'game_over'
+        let stats;
+
+        // --- Fonctions pour les statistiques ---
+        function loadStats() {
+            const savedStats = localStorage.getItem('montyHallStats');
+            stats = savedStats ? JSON.parse(savedStats) : { stick: { total: 0, wins: 0 }, switch: { total: 0, wins: 0 } };
+        }
+
+        function saveStats() {
+            localStorage.setItem('montyHallStats', JSON.stringify(stats));
+        }
+        
+        function resetStats() {
+            if (confirm("Êtes-vous sûr de vouloir effacer toutes les statistiques ?")) {
+                stats = { stick: { total: 0, wins: 0 }, switch: { total: 0, wins: 0 } };
+                saveStats();
+                updateStatsDisplay();
+            }
+        }
+        
+        // --- Fonctions de simulation ---
+        function runSimulation(iterations, strategy) {
+            // Désactive les boutons pendant la simulation
+            [testStickButton, testSwitchButton, resetButton].forEach(btn => btn.disabled = true);
+
+            for (let i = 0; i < iterations; i++) {
+                const localCarDoor = Math.floor(Math.random() * 3);
+                const localPlayerChoice = Math.floor(Math.random() * 3);
+                let isWinner;
+
+                if (strategy === 'stick') {
+                    isWinner = (localPlayerChoice === localCarDoor);
+                    stats.stick.total++;
+                    if (isWinner) stats.stick.wins++;
+                } else { // 'switch'
+                    isWinner = (localPlayerChoice !== localCarDoor);
+                    stats.switch.total++;
+                    if (isWinner) stats.switch.wins++;
+                }
+            }
+
+            saveStats();
+            updateStatsDisplay();
+            messageEl.textContent = `${iterations} parties simulées avec la stratégie "${strategy === 'stick' ? 'Garder' : 'Changer'}".`;
+            
+            // Réactive les boutons
+            [testStickButton, testSwitchButton, resetButton].forEach(btn => btn.disabled = false);
+        }
+
+        // --- Fonctions principales du jeu ---
+        function init() {
+            gameState = 'initial_choice';
+            carDoor = Math.floor(Math.random() * 3);
+            playerChoice = null;
+            hostOpenedDoor = null;
+
+            doors.forEach((door, index) => {
+                door.classList.remove('selected', 'open');
+                door.querySelector('.content').innerHTML = index + 1;
+                door.style.cursor = 'pointer';
+            });
+
+            messageEl.textContent = 'Faites votre premier choix : cliquez sur une porte.';
+            updateStatsDisplay();
+        }
+
+        function handleDoorClick(doorIndex) {
+            if (gameState === 'game_over') { init(); return; }
+            if (gameState === 'initial_choice') handleInitialChoice(doorIndex);
+            else if (gameState === 'final_choice') handleFinalChoice(doorIndex);
+        }
+
+        function handleInitialChoice(doorIndex) {
+            playerChoice = doorIndex;
+            doors[doorIndex].classList.add('selected');
+            gameState = 'final_choice';
+            openHostDoor();
+        }
+
+        function openHostDoor() {
+            let doorToOpen;
+            do { doorToOpen = Math.floor(Math.random() * 3); } while (doorToOpen === playerChoice || doorToOpen === carDoor);
+
+            hostOpenedDoor = doorToOpen;
+            doors[hostOpenedDoor].classList.add('open');
+            doors[hostOpenedDoor].querySelector('.content').innerHTML = '🐐';
+            messageEl.textContent = 'Changez ou gardez votre porte ? Cliquez sur votre choix final.';
+        }
+
+        function handleFinalChoice(finalChoiceIndex) {
+            if (finalChoiceIndex === hostOpenedDoor) return;
+
+            gameState = 'game_over';
+            const isWinner = finalChoiceIndex === carDoor;
+            const strategy = (finalChoiceIndex === playerChoice) ? 'stick' : 'switch';
+
+            stats[strategy].total++;
+            if (isWinner) {
+                stats[strategy].wins++;
+                messageEl.textContent = '🎉 Gagné ! Cliquez sur une porte pour rejouer.';
+            } else {
+                messageEl.textContent = '😭 Perdu... Cliquez sur une porte pour rejouer.';
+            }
+
+            revealAllDoors();
+            saveStats();
+            updateStatsDisplay();
+        }
+
+        function revealAllDoors() {
+            doors.forEach((door, index) => {
+                door.classList.add('open');
+                door.querySelector('.content').innerHTML = (index === carDoor) ? '🚗' : '🐐';
+            });
+        }
+        
+        function updateStatsDisplay() {
+            for (const strategy of ['stick', 'switch']) {
+                const s = stats[strategy];
+                const rate = s.total > 0 ? ((s.wins / s.total) * 100).toFixed(1) : 0;
+                document.getElementById(`${strategy}_total`).textContent = s.total;
+                document.getElementById(`${strategy}_wins`).textContent = s.wins;
+                document.getElementById(`${strategy}_rate`).textContent = `${rate}%`;
+            }
+        }
+
+        // --- Initialisation ---
+        doors.forEach((door, index) => door.addEventListener('click', () => handleDoorClick(index)));
+        resetButton.addEventListener('click', init);
+        resetStatsButton.addEventListener('click', resetStats);
+        testStickButton.addEventListener('click', () => runSimulation(100, 'stick'));
+        testSwitchButton.addEventListener('click', () => runSimulation(100, 'switch'));
+
+        loadStats();
+        init();
+    </script>
+</body>
+</html>
